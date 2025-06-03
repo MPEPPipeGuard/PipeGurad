@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PipeGuard – AI-Powered Leak Detection System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2A6C6F',
+            accent: '#B1CBD4',
+            dark: '#1A1A1A',
+          },
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ----------------------------
+       Base body styles + bottom‐padding
+       for fixed footer
+       ---------------------------- */
+    body {
+      font-family: 'Poppins', sans-serif;
+      scroll-behavior: smooth;
+      background-color: #f8fafc;   /* Tailwind’s gray-50 */
+      color: #1a1a1a;              /* default text color = dark */
+      padding-bottom: 8rem;        /* so content never hides under the fixed footer */
+    }
+
+    /* ----------------------------
+       Dark‐mode overrides toggled via
+       <body class="dark-mode">
+       ---------------------------- */
+    .dark-mode {
+      background-color: #1a1a1a;   /* very dark background */
+      color: #f8fafc;              /* light default text */
+    }
+    .dark-mode nav {
+      background-color: #111827;   /* Tailwind’s gray-900 */
+    }
+    .dark-mode .bg-white {
+      background-color: #374151;   /* Tailwind’s gray-700 */
+    }
+    .dark-mode .bg-gray-50 {
+      background-color: #1f2937;   /* Tailwind’s gray-800 */
+    }
+    .dark-mode .bg-gray-100 {
+      background-color: #111827;   /* Tailwind’s gray-900 */
+    }
+    .dark-mode .text-dark {
+      color: #f8fafc;              /* override any text-dark on body */
+    }
+    .dark-mode .text-primary {
+      color: #b1cbd4;              /* lighten primary color in dark mode */
+    }
+    .dark-mode .border-gray-300 {
+      border-color: #4b5563;       /* Tailwind’s gray-600 */
+    }
+    .dark-mode .border-teal-700 {
+      border-color: #2a6c6f;       /* tailwind-teal-700 (fits dark mode) */
+    }
+
+    /* ----------------------------
+       (A) Force all dark text → white in .dark-mode
+       ---------------------------- */
+    .dark-mode .text-dark,
+    .dark-mode p,
+    .dark-mode h1,
+    .dark-mode h2,
+    .dark-mode h3,
+    .dark-mode h4,
+    .dark-mode h5,
+    .dark-mode h6,
+    .dark-mode span,
+    .dark-mode a,
+    .dark-mode li,
+    .dark-mode td,
+    .dark-mode th {
+      color: #ffffff !important;
+    }
+
+    /* ----------------------------
+       (B) Exclude everything inside .no-invert:
+       restore original colors
+       ---------------------------- */
+    .dark-mode .no-invert,
+    .dark-mode .no-invert * {
+      color: initial !important;
+    }
+
+    /* Accordion transitions remain the same */
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    .nav-link:hover::after {
+      width: 100%;
+    }
+    .nav-link::after {
+      content: '';
+      display: block;
+      width: 0;
+      height: 2px;
+      background: white;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-dark">
+  <!-- Navigation -->
+  <nav class="fixed top-0 w-full bg-primary text-white shadow-lg z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <!-- Logo: using the white logo with increased size -->
+      <div class="flex items-center">
+        <a href="#">
+          <img
+            src="pipe_guard_white_logo.png"
+            alt="PipeGuard Logo"
+            class="h-14"
+          />
+        </a>
+      </div>
+
+      <!-- Desktop links -->
+      <div class="hidden md:flex space-x-8">
+        <a href="#about" class="nav-link">About</a>
+        <a href="#system" class="nav-link">System</a>
+        <a href="#maintenance" class="nav-link">Maintenance</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#warranty" class="nav-link">Warranty</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </div>
+
+      <!-- Right‐side icons: Mobile menu toggle & theme toggle -->
+      <div class="flex items-center space-x-4">
+        <!-- Day/Night toggle -->
+        <button
+          id="theme-toggle"
+          class="focus:outline-none text-white"
+          title="Toggle Day/Night Mode"
+        >
+          <i id="theme-icon" class="fas fa-moon text-2xl"></i>
+        </button>
+
+        <!-- Mobile hamburger -->
+        <button id="menu-toggle" class="md:hidden focus:outline-none">
+          <i class="fas fa-bars text-2xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden py-2 bg-primary" id="mobile-menu">
+      <a href="#about" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">About</a>
+      <a href="#system" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">System</a>
+      <a href="#maintenance" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">Maintenance</a>
+      <a href="#dashboard" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">Dashboard</a>
+      <a href="#warranty" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">Warranty</a>
+      <a href="#faq" class="block py-2 px-4 hover:bg-teal-700 rounded text-white">FAQ</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="pt-24 pb-16 bg-gradient-to-r from-primary to-teal-800 text-white">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col items-center">
+        <!-- Make text span full width by removing image column -->
+        <div class="w-full">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4 text-center">
+            Advanced AI-Powered Leak Detection
+          </h1>
+          <p class="text-xl mb-6 text-center">
+            Prevent waste, reduce risks, and optimize maintenance with PipeGuard’s
+            intelligent monitoring system.
+          </p>
+          <div class="flex justify-center">
+            <a
+              href="#about"
+              class="bg-white text-primary font-bold py-3 px-6 rounded-lg hover:bg-gray-100 transition duration-300 inline-block"
+              >Learn More</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- About Section -->
+  <section id="about" class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">About PipeGuard</h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+      <div class="flex flex-col md:flex-row items-center">
+        <!-- Replace placeholder with colored logo -->
+        <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+          <img
+            src="Untitled design-7.png"
+            alt="PipeGuard Colored Logo"
+            class="rounded-lg shadow-md"
+          />
+        </div>
+        <div class="md:w-1/2">
+          <p class="text-lg mb-6">
+            PipeGuard is an innovative, AI-powered system designed to detect
+            leakages across various pipe types. It combines advanced sensors
+            with cloud analytics to revolutionize pipeline maintenance.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-accent p-6 rounded-lg shadow-sm">
+              <i class="fas fa-leaf text-primary text-3xl mb-3"></i>
+              <h3 class="font-bold text-lg mb-2">Prevent Resource Waste</h3>
+              <p>
+                Minimize water loss and reduce operational costs through early
+                detection.
+              </p>
+            </div>
+            <div class="bg-accent p-6 rounded-lg shadow-sm">
+              <i class="fas fa-globe text-primary text-3xl mb-3"></i>
+              <h3 class="font-bold text-lg mb-2">Reduce Environmental Risks</h3>
+              <p>
+                Prevent dangerous spills and contamination with proactive
+                monitoring.
+              </p>
+            </div>
+            <div class="bg-accent p-6 rounded-lg shadow-sm">
+              <i class="fas fa-tools text-primary text-3xl mb-3"></i>
+              <h3 class="font-bold text-lg mb-2">Optimize Maintenance</h3>
+              <p>
+                Schedule repairs efficiently with predictive analytics and real-time
+                alerts.
+              </p>
+            </div>
+            <div class="bg-accent p-6 rounded-lg shadow-sm">
+              <i class="fas fa-chart-line text-primary text-3xl mb-3"></i>
+              <h3 class="font-bold text-lg mb-2">Real-Time Monitoring</h3>
+              <p>
+                24/7 oversight with smart alerting for immediate response to
+                anomalies.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- System Overview Section -->
+  <section id="system" class="py-16 bg-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">System Overview</h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+
+      <!-- Key Features -->
+      <div class="mb-16">
+        <h3 class="text-2xl font-semibold text-primary mb-6 text-center">
+          Key Features
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- AI-Powered Leak Detection -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div class="flex items-center mb-4">
+              <div class="bg-primary text-white p-3 rounded-full mr-4">
+                <i class="fas fa-brain text-xl"></i>
+              </div>
+              <h4 class="font-bold text-lg">AI-Powered Leak Detection</h4>
+            </div>
+            <p>
+              Machine learning algorithms analyze sensor data to predict leaks
+              before they escalate, reducing downtime and repair costs.
+            </p>
+          </div>
+
+          <!-- Sensor Network Integration -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div class="flex items-center mb-4">
+              <div class="bg-primary text-white p-3 rounded-full mr-4">
+                <i class="fas fa-network-wired text-xl"></i>
+              </div>
+              <h4 class="font-bold text-lg">Sensor Network Integration</h4>
+            </div>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Ultrasonic Rings: Move every few days to scan pipe interiors</li>
+              <li>Fixed Pressure Sensors: Continuously monitor pressure changes</li>
+              <li>Capacitance Sensors (optional): Detect material/moisture changes</li>
+            </ul>
+          </div>
+
+          <!-- Real-Time Alerts -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div class="flex items-center mb-4">
+              <div class="bg-primary text-white p-3 rounded-full mr-4">
+                <i class="fas fa-bell text-xl"></i>
+              </div>
+              <h4 class="font-bold text-lg">Real-Time Alerts</h4>
+            </div>
+            <p>
+              Immediate buzzer or dashboard notifications on sudden anomalies
+              with severity classification for prioritized response.
+            </p>
+          </div>
+
+          <!-- SCADA Dashboard (remove image; text full width) -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <h4 class="font-bold text-lg text-primary mb-4">SCADA Dashboard</h4>
+            <p>
+              Comprehensive visual map with alerts and diagnostics for complete
+              system oversight from any location.
+            </p>
+          </div>
+
+          <!-- Energy-Efficient -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div class="flex items-center mb-4">
+              <div class="bg-primary text-white p-3 rounded-full mr-4">
+                <i class="fas fa-solar-panel text-xl"></i>
+              </div>
+              <h4 class="font-bold text-lg">Energy-Efficient</h4>
+            </div>
+            <p>
+              Solar-powered charging stations and low-frequency scans conserve
+              energy while maintaining optimal performance.
+            </p>
+          </div>
+
+          <!-- Cloud Analytics -->
+          <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div class="flex items-center mb-4">
+              <div class="bg-primary text-white p-3 rounded-full mr-4">
+                <i class="fas fa-cloud text-xl"></i>
+              </div>
+              <h4 class="font-bold text-lg">Cloud Analytics</h4>
+            </div>
+            <p>
+              Secure remote access to historical data and predictive analytics
+              for long-term maintenance planning.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Components Table -->
+      <div>
+        <h3 class="text-2xl font-semibold text-primary mb-6 text-center">
+          Main Components
+        </h3>
+        <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-primary text-white">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                >
+                  Component
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                >
+                  Description
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Ultrasonic Ring
+                </td>
+                <td class="px-6 py-4">
+                  Scans pipes every 3 days for internal anomalies
+                </td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Pressure Sensors x2
+                </td>
+                <td class="px-6 py-4">
+                  Monitor pressure at fixed points along the pipeline
+                </td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Capacitance Sensors x2 (optional)
+                </td>
+                <td class="px-6 py-4">
+                  Detect leakage-related moisture in surrounding materials
+                </td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap font-medium">AI System</td>
+                <td class="px-6 py-4">
+                  Analyzes sensor data and predicts potential leakages
+                </td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Cloud Storage
+                </td>
+                <td class="px-6 py-4">
+                  Provides remote access and secure data logging
+                </td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Arduino Microcontroller
+                </td>
+                <td class="px-6 py-4">
+                  Interfaces between sensors and AI processing unit
+                </td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap font-medium">
+                  Charging Station
+                </td>
+                <td class="px-6 py-4">
+                  Solar-powered station that powers ultrasonic rings
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Maintenance Section -->
+  <section id="maintenance" class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">
+          System Maintenance Guide
+        </h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Weekly Tasks -->
+        <div class="bg-gray-100 p-6 rounded-lg shadow-sm">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary text-white p-3 rounded-full mr-4">
+              <i class="fas fa-calendar-week text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-primary">Weekly Tasks</h3>
+          </div>
+          <ul class="space-y-3">
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Clean all sensors from dust and dirt</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Check cables and seal integrity</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Perform connectivity and alert tests</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Verify solar charging station operation</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Monthly Tasks -->
+        <div class="bg-gray-100 p-6 rounded-lg shadow-sm">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary text-white p-3 rounded-full mr-4">
+              <i class="fas fa-calendar-alt text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-primary">Monthly Tasks</h3>
+          </div>
+          <ul class="space-y-3">
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Oil the ultrasonic ring components</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Inspect protective enclosures</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Review system logs for anomalies</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Test backup power systems</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Yearly Tasks -->
+        <div class="bg-gray-100 p-6 rounded-lg shadow-sm">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary text-white p-3 rounded-full mr-4">
+              <i class="fas fa-calendar-day text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-primary">Yearly Tasks</h3>
+          </div>
+          <ul class="space-y-3">
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Clean internal parts thoroughly</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Replace damaged components</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Check battery health and sensor precision</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+              <span>Calibrate all sensors to factory standards</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-12 bg-accent p-6 rounded-lg">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-triangle text-2xl text-yellow-600 mr-4"></i>
+          <h3 class="text-xl font-semibold">Maintenance Tips</h3>
+        </div>
+        <p class="mt-3">
+          Always power down the system before performing maintenance. Keep a log of
+          all maintenance activities including dates, tasks performed, and any
+          observations. For complex issues, contact PipeGuard support for assistance.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Section -->
+  <section id="dashboard" class="py-16 bg-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">
+          Dashboard & User Interface
+        </h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+
+      <!-- SCADA Monitoring -->
+      <div class="mb-16">
+        <h3 class="text-2xl font-semibold text-primary mb-6">
+          SCADA Monitoring Interface
+        </h3>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <!-- Removed the image; kept text content full width -->
+          <div>
+            <h4 class="text-lg font-medium mb-4 text-primary">Key Features:</h4>
+            <ul class="space-y-3">
+              <li class="flex items-start">
+                <i class="fas fa-tachometer-alt text-primary mt-1 mr-3"></i>
+                <span>Real-time pressure and capacitance monitoring with historical trends</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-exclamation-circle text-primary mt-1 mr-3"></i>
+                <span>Clear leak status indicators (Normal / Warning / Leak Detected)</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-file-alt text-primary mt-1 mr-3"></i>
+                <span>Detailed ultrasonic scan reports with anomaly detection</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-ribbon text-primary mt-1 mr-3"></i>
+                <span>Color-coded alert ribbon with severity classification</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-map-marked-alt text-primary mt-1 mr-3"></i>
+                <span>Interactive map-based pipeline view with sensor locations</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Interface -->
+      <div class="mb-16">
+        <h3 class="text-2xl font-semibold text-primary mb-6">
+          Mobile Interface
+        </h3>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <!-- Removed the image; kept text content full width -->
+          <div>
+            <h4 class="text-lg font-medium mb-4 text-primary">Features:</h4>
+            <ul class="space-y-3">
+              <li class="flex items-start">
+                <i class="fas fa-mobile-alt text-primary mt-1 mr-3"></i>
+                <span>Push notifications for critical alerts with acknowledgment system</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-envelope text-primary mt-1 mr-3"></i>
+                <span>Scheduled email reports with system health summaries</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-chart-pie text-primary mt-1 mr-3"></i>
+                <span>Mobile-optimized dashboard with key metrics</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-bell-slash text-primary mt-1 mr-3"></i>
+                <span>Customizable alert preferences and quiet hours</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-camera text-primary mt-1 mr-3"></i>
+                <span>Photo documentation for maintenance records</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intervention Guidelines (no-invert) -->
+      <div class="no-invert">
+        <h3 class="text-2xl font-semibold text-primary mb-6">Intervention Guidelines</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Critical Leak -->
+          <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+              <h4 class="text-xl font-semibold">Critical Leak</h4>
+            </div>
+            <ul class="space-y-2">
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-red-500 mt-1 mr-2 text-xs"></i>
+                <span>Immediate shutdown of affected section</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-red-500 mt-1 mr-2 text-xs"></i>
+                <span>Dispatch emergency response team</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-red-500 mt-1 mr-2 text-xs"></i>
+                <span>Notify all relevant stakeholders</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-red-500 mt-1 mr-2 text-xs"></i>
+                <span>Document incident with photos and logs</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Minor Anomaly -->
+          <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-exclamation-circle text-yellow-500 text-2xl mr-3"></i>
+              <h4 class="text-xl font-semibold">Minor Anomaly</h4>
+            </div>
+            <ul class="space-y-2">
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-yellow-500 mt-1 mr-2 text-xs"></i>
+                <span>Review within 24 hours</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-yellow-500 mt-1 mr-2 text-xs"></i>
+                <span>Schedule inspection if needed</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-yellow-500 mt-1 mr-2 text-xs"></i>
+                <span>Monitor for changes in status</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-yellow-500 mt-1 mr-2 text-xs"></i>
+                <span>Update maintenance records</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Normal Operation -->
+          <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-check-circle text-green-500 text-2xl mr-3"></i>
+              <h4 class="text-xl font-semibold">Normal Operation</h4>
+            </div>
+            <ul class="space-y-2">
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-green-500 mt-1 mr-2 text-xs"></i>
+                <span>No immediate action required</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-green-500 mt-1 mr-2 text-xs"></i>
+                <span>Continue routine monitoring</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-green-500 mt-1 mr-2 text-xs"></i>
+                <span>Perform scheduled maintenance</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-arrow-right text-green-500 mt-1 mr-2 text-xs"></i>
+                <span>Document system health status</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warranty Section -->
+  <section id="warranty" class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">Warranty & Support</h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <!-- Coverage -->
+        <div class="bg-gray-100 p-6 rounded-lg">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary text-white p-3 rounded-full mr-4">
+              <i class="fas fa-shield-alt text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-primary">
+              Coverage (5 Years)
+            </h3>
+          </div>
+          <ul class="space-y-2">
+            <li class="flex items-start">
+              <i class="fas fa-check text-primary mt-1 mr-2"></i>
+              <span>AI hardware components</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check text-primary mt-1 mr-2"></i>
+              <span>Ultrasonic movement mechanisms</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check text-primary mt-1 mr-2"></i>
+              <span>Battery and power system issues</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check text-primary mt-1 mr-2"></i>
+              <span>Sensor manufacturing defects</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-check text-primary mt-1 mr-2"></i>
+              <span>Software and firmware updates</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Not Covered -->
+        <div class="bg-gray-100 p-6 rounded-lg">
+          <div class="flex items-center mb-4">
+            <div class="bg-primary text-white p-3 rounded-full mr-4">
+              <i class="fas fa-times-circle text-xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-primary">Not Covered</h3>
+          </div>
+          <ul class="space-y-2">
+            <li class="flex items-start">
+              <i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span>Flood or water damage</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span>Accidents or improper handling</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span>Physical wear and tear</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span>Unauthorized modifications</span>
+            </li>
+            <li class="flex items-start">
+              <i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span>Acts of nature or vandalism</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- How to Claim -->
+      <div class="mb-12">
+        <h3 class="text-2xl font-semibold text-primary mb-6">
+          How to Claim Warranty Service
+        </h3>
+        <div class="bg-accent p-6 rounded-lg">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h4 class="font-medium mb-2 text-primary">Contact Information:</h4>
+              <ul class="space-y-2">
+                <li class="flex items-center">
+                  <i class="fas fa-envelope text-primary mr-3"></i>
+                  <span>pipeguard@gmail.com</span>
+                </li>
+                <li class="flex items-center">
+                  <i class="fas fa-phone text-primary mr-3"></i>
+                  <span>+962 791234567</span>
+                </li>
+                <li class="flex items-center">
+                  <i class="fas fa-clock text-primary mr-3"></i>
+                  <span>Mon-Fri: 8AM–5PM (GMT+3)</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-medium mb-2 text-primary">Claim Process:</h4>
+              <ol class="list-decimal pl-5 space-y-1">
+                <li>Provide proof of purchase</li>
+                <li>Describe the issue in detail</li>
+                <li>Include photos or videos</li>
+                <li>Wait for service instructions</li>
+              </ol>
+            </div>
+            <div>
+              <h4 class="font-medium mb-2 text-primary">Response Time:</h4>
+              <p>
+                Initial response within 24 hours. Most claims processed within 3–5
+                business days. Emergency support available for critical system failures.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Services -->
+      <div>
+        <h3 class="text-2xl font-semibold text-primary mb-6">Additional Services</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-primary text-white p-6 rounded-lg">
+            <i class="fas fa-calendar-check text-3xl mb-4"></i>
+            <h4 class="font-bold mb-2">Annual Checkups</h4>
+            <p>Comprehensive system inspection and performance optimization by certified
+              technicians.</p>
+          </div>
+          <div class="bg-primary text-white p-6 rounded-lg">
+            <i class="fas fa-headset text-3xl mb-4"></i>
+            <h4 class="font-bold mb-2">Priority Support</h4>
+            <p>24/7 access to senior technicians with guaranteed 2-hour response for critical
+              issues.</p>
+          </div>
+          <div class="bg-primary text-white p-6 rounded-lg">
+            <i class="fas fa-sync-alt text-3xl mb-4"></i>
+            <h4 class="font-bold mb-2">Quick Replacements</h4>
+            <p>Advanced replacement service with next-day shipping for faulty components.</p>
+          </div>
+          <div class="bg-primary text-white p-6 rounded-lg">
+            <i class="fas fa-robot text-3xl mb-4"></i>
+            <h4 class="font-bold mb-2">AI Updates</h4>
+            <p>Free algorithm improvements and new detection models as they become available.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="py-16 bg-gray-100">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-primary mb-4">Frequently Asked Questions</h2>
+        <div class="w-20 h-1 bg-primary mx-auto"></div>
+      </div>
+
+      <div class="max-w-3xl mx-auto">
+        <!-- FAQ Item 1 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">What pipes is the system compatible with?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                PipeGuard is compatible with all common pipe materials including PVC,
+                copper, steel, and concrete, with diameters ranging from 1 to 24 inches.
+                Special adapters are available for non-standard pipe sizes.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 2 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">What's the recommended sensor installation distance?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                We recommend installing sensors every 2 meters for optimal coverage in
+                standard applications. For low-risk areas or straight pipe runs without
+                junctions, spacing can be extended to 3–4 meters. High-risk areas or
+                complex pipe networks may require sensors every 1 meter.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 3 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">Can I install PipeGuard outdoors or in harsh environments?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                Yes, PipeGuard components are designed for industrial environments. For
+                outdoor or harsh conditions (extreme temperatures, high humidity,
+                corrosive atmospheres), we recommend using our protective enclosures
+                (available as accessories) which provide IP67 waterproof rating and
+                additional thermal insulation.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 4 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">Is my data secure in the cloud?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                Absolutely. PipeGuard uses military-grade 256-bit encryption for all data
+                transmission and storage. Each system has isolated storage with strict
+                access controls. We comply with international data protection regulations
+                and never share your data with third parties.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 5 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">How long is operational data retained?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                Detailed sensor data is retained for 6 months from the date of
+                installation. Summary reports and maintenance records are kept
+                indefinitely unless you request deletion. You can download your
+                complete dataset at any time for local archiving.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 6 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">How do I get technical support?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                Technical support is available via email (support@pipeguard.com) or
+                phone (+962 79### ####) with guaranteed response within 12–24 hours for
+                standard inquiries. Emergency support for critical system failures is
+                available 24/7 with a 2-hour response commitment for premium service
+                subscribers.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Item 7 -->
+        <div class="mb-4 border border-gray-300 rounded-lg overflow-hidden">
+          <button
+            class="faq-toggle w-full text-left p-4 bg-white hover:bg-gray-50 focus:outline-none flex justify-between items-center"
+          >
+            <span class="font-medium">Can I expand the system later with additional sensors?</span>
+            <i class="fas fa-chevron-down transition-transform duration-300"></i>
+          </button>
+          <div class="accordion-content bg-gray-50">
+            <div class="p-4">
+              <p>
+                Yes, PipeGuard is designed for easy expansion. You can add extra
+                sensors at any time and pair them with your existing system through
+                the dashboard interface. The AI will automatically incorporate the new
+                sensors into its monitoring and analysis routines. Expansion kits are
+                available with discounted pricing for existing customers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fixed Contact Footer -->
+  <footer class="bg-primary text-white py-8 fixed bottom-0 w-full z-40">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0 flex items-center">
+          <!-- Footer logo enlarged and switched to white version -->
+          <img
+            src="pipe_guard_white_logo.png"
+            alt="PipeGuard Logo"
+            class="h-10 mr-2"
+          />
+          <span class="text-xl font-bold">PipeGuard</span>
+        </div>
+        <div class="flex flex-col md:flex-row md:space-x-8 space-y-2 md:space-y-0">
+          <div class="flex items-center">
+            <i class="fas fa-envelope mr-2"></i>
+            <span>pipeguard@gmail.com</span>
+          </div>
+          <div class="flex items-center">
+            <i class="fas fa-phone mr-2"></i>
+            <span>+962791234567</span>
+          </div>
+        </div>
+        <!-- Download link points to "User%20Manual.pdf" -->
+        <div class="mt-4 md:mt-0">
+          <a
+            href="User%20Manual.pdf"
+            download
+            class="bg-white text-primary font-bold py-2 px-4 rounded hover:bg-gray-100 transition duration-300 flex items-center"
+          >
+            <i class="fas fa-download mr-2"></i>
+            Download User Manual
+          </a>
+        </div>
+      </div>
+      <div class="border-t border-teal-700 mt-6 pt-6 text-center text-sm">
+        <p>&copy; 2023 PipeGuard. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', function () {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    });
+
+    // FAQ accordion functionality
+    const faqToggles = document.querySelectorAll('.faq-toggle');
+    faqToggles.forEach((toggle) => {
+      toggle.addEventListener('click', function () {
+        const content = this.nextElementSibling;
+        const icon = this.querySelector('i');
+
+        if (content.style.maxHeight) {
+          content.style.maxHeight = null;
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          content.style.maxHeight = content.scrollHeight + 'px';
+          icon.style.transform = 'rotate(180deg)';
+        }
+      });
+    });
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          const mobileMenu = document.getElementById('mobile-menu');
+          if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+          }
+
+          const headerHeight = document.querySelector('nav').offsetHeight;
+          const targetPosition =
+            targetElement.getBoundingClientRect().top +
+            window.pageYOffset -
+            headerHeight;
+
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth',
+          });
+        }
+      });
+    });
+
+    // Initialize FAQ items to be closed on load
+    document.addEventListener('DOMContentLoaded', function () {
+      const faqContents = document.querySelectorAll('.accordion-content');
+      faqContents.forEach((content) => {
+        content.style.maxHeight = null;
+      });
+    });
+
+    // Day/Night toggle logic
+    document.getElementById('theme-toggle').addEventListener('click', function () {
+      const body = document.body;
+      const icon = document.getElementById('theme-icon');
+
+      body.classList.toggle('dark-mode');
+      if (body.classList.contains('dark-mode')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+    });
+  </script>
+</body>
+</html>
